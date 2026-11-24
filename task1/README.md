@@ -23,6 +23,8 @@ The default Django user model must be replaced with a custom User model (extendi
   - Register with phone number, password, first name, last name, and optional photo.
 - **Login (`POST /api/users/login/` or `/api/token/`)**:
   - Authenticate using phone number and password (JWT or Token authentication).
+- **Get Profile (`GET /api/users/profile/` or `/api/users/me/`)**:
+  - Retrieve the authenticated user's profile information (phone, first name, last name, photo, role).
 - **Update User (`PUT/PATCH /api/users/profile/`)**:
   - Update user details and/or upload a new profile photo.
 - **Delete User Photo (`DELETE /api/users/profile/photo/`)**:
@@ -94,6 +96,7 @@ An additional user role: **Author**.
 | Action | Client | Author | Administration |
 | :--- | :---: | :---: | :---: |
 | Register / Login | Yes | Yes | Yes |
+| Get Profile (View Info) | Self only | Self only | Any / Self |
 | Update Profile / Delete Photo | Self only | Self only | Any / Self |
 | View Approved Books | Yes | Yes | Yes |
 | Request Book Borrow | Yes | Yes | Yes |
