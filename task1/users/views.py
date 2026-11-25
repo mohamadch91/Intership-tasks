@@ -74,8 +74,27 @@ def login(request):
         status=status.HTTP_200_OK
     )
 
-@api_view(["GET"])
+@api_view(["GET", "PUT", "PATCH"])
 @permission_classes([IsAuthenticated])
-def get_profile(request):
-    serializer = ProfileSerializer(request.user)
-    return Response(serializer.data)
+def profile(request):
+    # Get current user profile
+    if request.method == "GET":
+        serializer = ProfileSerializer(request.user)
+        return Response(serializer.data)
+
+    # Updates the current user profile
+    serializer = ProfileSerializer(request.user, data=request.data, partial=request.method == "PATCH")
+
+    if serializer.is_valid():
+        # Update user in database
+        user = serializer.save()
+        return Response(
+            {"message": "Updated profile",},
+            status=status.HTTP_200_OK
+        )
+    
+    return Response(
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST
+     )
+    
