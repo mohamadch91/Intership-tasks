@@ -56,3 +56,24 @@ class LoginTest(APITestCase):
             format="json",
         )
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+class ProfileTest(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            phone="+442738405827",
+            password="12345678",
+            first_name="Adi",
+            last_name="Marim",
+        )
+
+    # Test 4: logged in user checks profile
+    def test_get_profile_success(self):
+        self.client.force_authenticate(user=self.user)
+        res = self.client.get(reverse("profile"))
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["phone"], "+442738405827")
+        self.assertEqual(res.data["first_name"], "Adi")
+        self.assertEqual(res.data["last_name"], "Marim")
+        self.assertEqual(res.data["role"], "client")
+        self.assertIn("photo", res.data)
