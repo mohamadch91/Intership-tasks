@@ -65,8 +65,10 @@ class ProfileTest(APITestCase):
             first_name="Adi",
             last_name="Marim",
         )
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse("profile")
 
-    # Test 4: logged in user checks profile
+    # Test 4: Logged in user checks profile
     def test_get_profile_success(self):
         self.client.force_authenticate(user=self.user)
         res = self.client.get(reverse("profile"))
@@ -77,3 +79,13 @@ class ProfileTest(APITestCase):
         self.assertEqual(res.data["last_name"], "Marim")
         self.assertEqual(res.data["role"], "client")
         self.assertIn("photo", res.data)
+
+    # Test 5: Update user profile
+    def test_profile_update_succes(self):
+        res = self.client.put(
+            self.url, {"first_name": "Moe", "last_name": "Smith"}, format="json"
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "Moe")
+        self.assertEqual(self.user.last_name, "Smith")
