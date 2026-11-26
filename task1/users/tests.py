@@ -1,6 +1,7 @@
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from .models import User
 
@@ -81,11 +82,33 @@ class ProfileTest(APITestCase):
         self.assertIn("photo", res.data)
 
     # Test 5: Update user profile
-    def test_profile_update_succes(self):
+    def test_profile_update_success(self):
         res = self.client.put(
-            self.url, {"first_name": "Moe", "last_name": "Smith"}, format="json"
+            self.url, {"first_name": "Moe", "last_name": "Smith"}, 
+            format="json"
         )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
         self.assertEqual(self.user.first_name, "Moe")
         self.assertEqual(self.user.last_name, "Smith")
+
+    # Test 6: Delete profile photo
+    def test_delete_profile_photo_success(self):
+        self.user.photo.save(
+            "profile.jpg",
+            SimpleUploadedFile(
+                "profile.jpg",
+                b"test image content",
+                content_type="image/jpeg"
+            )
+        )
+
+        res = self.client.delete(
+            reverse("delete-profile-photo")
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        # Check photo and if account still exists
+        self.assertTrue(User.objects.filter(id=self.user.id).exists())
+        self.assertFalse(self.user.photo)
