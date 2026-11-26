@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate
 from .models import User
 from .serializers import UserSerializer, ProfileSerializer
 
-# Create your views here.
+# Gets all users
 @api_view(["GET"])
 def user_list(request):
     users = User.objects.all()
@@ -16,6 +16,7 @@ def user_list(request):
 
     return Response(serializer.data)
 
+# Creates a new user
 @api_view(["POST"])
 def register(request):
     serializer = UserSerializer(data=request.data)
@@ -36,6 +37,7 @@ def register(request):
         status=status.HTTP_400_BAD_REQUEST
     )
 
+# Ask users for login details
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def login(request):
@@ -74,6 +76,7 @@ def login(request):
         status=status.HTTP_200_OK
     )
 
+# Gets users profile and updates profile details
 @api_view(["GET", "PUT", "PATCH"])
 @permission_classes([IsAuthenticated])
 def profile(request):
@@ -97,4 +100,22 @@ def profile(request):
         serializer.errors,
         status=status.HTTP_400_BAD_REQUEST
      )
-    
+
+# Deletes profile photo
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_profile_photo(request):
+    photo = request.user.photo
+
+    if not photo:
+        return Response(
+            {"message": "No current photo"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Delete user profile picture
+    request.user.photo.delete()
+    return Response(
+        {"message": "Profile photo deleteed"},
+        status=status.HTTP_200_OK
+    )
