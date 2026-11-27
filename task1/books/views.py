@@ -23,45 +23,66 @@ def visible_books(user):
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def book(request):
-
-    # GET: List all books
+    # Get: List all books
     if request.method == "GET":
         books = visible_books(request.user)
         serializer = BookSerializer(books, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
+    
     # POST: Add book
-    role = get_role(request.user)
-
-    if role not in ["administration", "author"]:
+    if get_role(request.user) != "administration":
         return Response(
-            {"detail": "Only authors and administration users can add books"},
+            {"detail": "Only administration users can add books"},
             status=status.HTTP_403_FORBIDDEN,
         )
 
     serializer = BookSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-
-    if role == "administration":
-        book = serializer.save(status=Book.Status.APPROVED)
-    else:
-        book = serializer.save(
-            status=Book.Status.PENDING,
-            author=request.user,
-        )
+    book = serializer.save(status=Book.Status.APPROVED)
 
     return Response(
         {
-            "message": "Book submitted successfully",
+            "message": "Book added successfully",
             "book": BookSerializer(book).data,
         },
         status=status.HTTP_201_CREATED,
     )
 
-# Get a specific book
-@api_view(["GET"])
+# Get, update and delete specific books
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def book_detail(request, pk):
+    # Get: display selected book data
     book = get_object_or_404(visible_books(request.user), pk=pk)
     serializer = BookSerializer(book)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+
+    if request.method == "GET":
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # PUT/PATCH: Update book
+    if get_role(request.user) != "administration":
+        return Response(
+            {"detail": "Only administration users can update books"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    if request.method in ["PUT", "PATCH"]:
+        serializer = BookSerializer(
+            book,
+            data=request.data,
+            partial=(request.method == "PATCH"),
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            {
+                "message": "Book updated successfully",
+                "book": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    # DELETE: Delete book
+    book.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
