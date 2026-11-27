@@ -8,7 +8,6 @@ from books.models import Book
 
 
 class BookTests(TestCase):
-
     def setUp(self):
         self.client = APIClient()
 
@@ -72,3 +71,37 @@ class BookTests(TestCase):
         self.assertEqual(Book.objects.count(), 2)
         self.assertEqual(response.data["book"]["title"], "The Hobbit")
 
+    # Test 4: Update a book
+    def test_update_book(self):
+        url = reverse("book-detail", kwargs={"pk": self.book.pk})
+
+        data = {
+            "title": "Harry Potter 2",
+        }
+
+        response = self.client.patch(url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data["book"]["title"],
+            "Harry Potter 2",
+        )
+
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.title, "Harry Potter 2")
+
+
+    # Test 5: Delete a book
+    def test_delete_book(self):
+        url = reverse("book-detail", kwargs={"pk": self.book.pk})
+
+        response = self.client.delete(url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+        )
+
+        self.assertFalse(
+            Book.objects.filter(pk=self.book.pk).exists()
+        )
