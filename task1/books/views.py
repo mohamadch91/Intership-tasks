@@ -23,7 +23,7 @@ def visible_books(user):
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def book(request):
-    # Get: List all books
+    # GET: List all books
     if request.method == "GET":
         books = visible_books(request.user)
         serializer = BookSerializer(books, many=True)
@@ -52,7 +52,7 @@ def book(request):
 @api_view(["GET", "PUT", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def book_detail(request, pk):
-    # Get: display selected book data
+    # GET: display selected book data
     book = get_object_or_404(visible_books(request.user), pk=pk)
     serializer = BookSerializer(book)
 

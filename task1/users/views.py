@@ -80,12 +80,12 @@ def login(request):
 @api_view(["GET", "PUT", "PATCH"])
 @permission_classes([IsAuthenticated])
 def profile(request):
-    # Get current user profile
+    # Get: get current user profile
     if request.method == "GET":
         serializer = ProfileSerializer(request.user)
         return Response(serializer.data)
 
-    # Updates the current user profile
+    # PUT/PATCH: Updates the current user profile
     serializer = ProfileSerializer(request.user, data=request.data, partial=request.method == "PATCH")
 
     if serializer.is_valid():
