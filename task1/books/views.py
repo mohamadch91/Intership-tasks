@@ -19,14 +19,44 @@ def visible_books(user):
     return Book.objects.filter(status=Book.Status.APPROVED)
 
 # Create your views here.
-# List all books
-@api_view(["GET"])
+# List all books and add books
+@api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
-def book_list(request):
-    books = visible_books(request.user)
-    serializer = BookSerializer(books, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+def book(request):
 
+    # GET: List all books
+    if request.method == "GET":
+        books = visible_books(request.user)
+        serializer = BookSerializer(books, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # POST: Add book
+    role = get_role(request.user)
+
+    if role not in ["administration", "author"]:
+        return Response(
+            {"detail": "Only authors and administration users can add books"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    serializer = BookSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    if role == "administration":
+        book = serializer.save(status=Book.Status.APPROVED)
+    else:
+        book = serializer.save(
+            status=Book.Status.PENDING,
+            author=request.user,
+        )
+
+    return Response(
+        {
+            "message": "Book submitted successfully",
+            "book": BookSerializer(book).data,
+        },
+        status=status.HTTP_201_CREATED,
+    )
 
 # Get a specific book
 @api_view(["GET"])
