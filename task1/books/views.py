@@ -18,6 +18,26 @@ def visible_books(user):
         return Book.objects.all()
     return Book.objects.filter(status=Book.Status.APPROVED)
 
+# Shared by approve and reject: admin sets a book's status
+def set_book_status(request, pk, new_status):
+    if get_role(request.user) != "administration":
+        return admin_only_response()
+
+    book = get_object_or_404(Book, pk=pk)
+    book.status = new_status
+    book.save(update_fields=["status"])
+    return Response(BookSerializer(book).data)
+
+# Response for non admin users
+def admin_only_response():
+    return Response(
+        {"detail": "Only administration users can perform this action."},
+        status=status.HTTP_403_FORBIDDEN,
+    )
+# Bad request message
+def bad_request(message):
+    return Response({"detail": message}, status=status.HTTP_400_BAD_REQUEST)
+
 # Create your views here.
 # List all books and add books
 @api_view(["GET", "POST"])
@@ -93,3 +113,15 @@ def book_detail(request, pk):
     # DELETE: Delete book
     book.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+# Approves authors book
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def book_approve(request, pk):
+    return set_book_status(request, pk, Book.Status.APPROVED)
+
+# Reject an authors book
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def book_reject(request, pk):
+    return set_book_status(request, pk, Book.Status.REJECTED)
