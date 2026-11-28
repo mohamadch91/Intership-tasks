@@ -90,7 +90,6 @@ class BookTests(TestCase):
         self.book.refresh_from_db()
         self.assertEqual(self.book.title, "Harry Potter 2")
 
-
     # Test 5: Delete a book
     def test_delete_book(self):
         url = reverse("book-detail", kwargs={"pk": self.book.pk})
@@ -105,3 +104,21 @@ class BookTests(TestCase):
         self.assertFalse(
             Book.objects.filter(pk=self.book.pk).exists()
         )
+
+    # Test 6: Approve book
+    def test_approve_book(self):
+        url = reverse("book-approve", args=[self.book.id])
+        response = self.client.post(url)
+
+        self.book.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.book.status, Book.Status.APPROVED)
+
+    # Test 7: Reject book
+    def test_reject_book(self):
+        url = reverse("book-reject", args=[self.book.id])
+        response = self.client.post(url)
+
+        self.book.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.book.status, Book.Status.REJECTED)
