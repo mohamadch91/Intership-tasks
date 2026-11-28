@@ -34,7 +34,7 @@ class BookTests(TestCase):
 
     # Test 1: List all books
     def test_list_books(self):
-        url = reverse("book")
+        url = reverse("book-list")
 
         response = self.client.get(url)
 
@@ -53,7 +53,7 @@ class BookTests(TestCase):
 
     # Test 3: Add a book
     def test_add_book(self):
-        url = reverse("book")
+        url = reverse("book-list")
 
         data = {
             "title": "The Hobbit",

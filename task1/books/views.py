@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Book
-from .serializers import BookSerializer
+from .serializers import BookSerializer, BorrowRequestSerializer
 
 # Gets role
 def get_role(user):
@@ -22,23 +22,30 @@ def visible_books(user):
 # List all books and add books
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
-def book(request):
+def book_list(request):
     # GET: List all books
     if request.method == "GET":
         books = visible_books(request.user)
         serializer = BookSerializer(books, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    # POST: Add book
-    if get_role(request.user) != "administration":
+
+    # POST: Add book (admin: direct, author: needs approval)
+    role = get_role(request.user)
+    if role not in ("administration", "author"):
         return Response(
-            {"detail": "Only administration users can add books"},
+            {"detail": "Only administration and author users can add books"},
             status=status.HTTP_403_FORBIDDEN,
         )
 
     serializer = BookSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    book = serializer.save(status=Book.Status.APPROVED)
+
+    if role == "administration":
+        # Admin books are published directly
+        book = serializer.save(status=Book.Status.APPROVED)
+    else:
+        # Author books wait for admin approval
+        book = serializer.save(status=Book.Status.PENDING, author=request.user)
 
     return Response(
         {
