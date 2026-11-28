@@ -28,6 +28,7 @@ class Book(models.Model):
     available_copies = models.PositiveIntegerField(default=1)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
 
+    # Make available_copies never exceed total_copies
     class Meta:
         constraints = [
             models.CheckConstraint(
@@ -35,3 +36,27 @@ class Book(models.Model):
                 name="available_copies_lte_total_copies"
             )
         ]
+
+class BorrowRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        REJECTED = "rejected", "Rejected"
+        BORROWED = "borrowed", "Borrowed"
+        RETURNED = "returned", "Returned"
+
+    book = models.ForeignKey(
+        Book, on_delete=models.CASCADE, related_name="borrow_requests"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="borrow_requests",
+    )
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.PENDING
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    borrowed_at = models.DateTimeField(null=True, blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    returned_at = models.DateTimeField(null=True, blank=True)
